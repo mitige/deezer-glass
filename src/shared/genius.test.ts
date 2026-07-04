@@ -34,6 +34,10 @@ describe('extractGeniusLyrics', () => {
   it('decodes numeric entities', () => {
     expect(extractGeniusLyrics('<div data-lyrics-container>I&#8217;m</div>')).toBe('I’m')
   })
+  it('strips genius contributor header, "you might also like", and trailing embed', () => {
+    const html = '<div data-lyrics-container="true">7 ContributorsAZERTY Lyrics<br/>First line<br/>You might also likeSecond line<br/>Last line3Embed</div>'
+    expect(extractGeniusLyrics(html)).toBe('First line\nSecond line\nLast line')
+  })
   it('returns null when no lyrics container present', () => {
     expect(extractGeniusLyrics('<div>nope</div>')).toBeNull()
   })
