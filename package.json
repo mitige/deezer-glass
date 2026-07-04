@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "build:native": "napi build --release --cargo-cwd native/smtc --js false native/smtc",
+    "build:native": "napi build --platform --release --cargo-cwd native/smtc native/smtc",
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke:smtc": "node scripts/smtc-smoke.mjs",
