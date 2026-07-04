@@ -39,7 +39,7 @@ export function extractGeniusLyrics(html: string): string | null {
     .replace(/&#x([0-9a-f]+);/gi, (_, n: string) => String.fromCodePoint(parseInt(n, 16)))
     .replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)))
     .replace(/&[a-z]+;/gi, (e) => NAMED[e.toLowerCase()] ?? e)
-    .replace(/^\s*\d+\s*Contributors?[\s\S]*?Lyrics\s*/i, '')
+    .replace(/^\s*\d+\s*Contributors?.*(?:\r?\n|$)/i, '')
     .replace(/You might also like/gi, '')
     .replace(/\d*\s*Embed\s*$/i, '')
     .replace(/[ \t]+\n/g, '\n')

@@ -38,6 +38,10 @@ describe('extractGeniusLyrics', () => {
     const html = '<div data-lyrics-container="true">7 ContributorsAZERTY Lyrics<br/>First line<br/>You might also likeSecond line<br/>Last line3Embed</div>'
     expect(extractGeniusLyrics(html)).toBe('First line\nSecond line\nLast line')
   })
+  it('strips a bare contributor-count header without the word "Lyrics"', () => {
+    const html = '<div data-lyrics-container>1 Contributor<br/>[Refrain]<br/>La coke, on la recoupe</div>'
+    expect(extractGeniusLyrics(html)).toBe('[Refrain]\nLa coke, on la recoupe')
+  })
   it('returns null when no lyrics container present', () => {
     expect(extractGeniusLyrics('<div>nope</div>')).toBeNull()
   })

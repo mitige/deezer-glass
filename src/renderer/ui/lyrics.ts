@@ -1,15 +1,25 @@
 import type { NowPlaying, Lyrics, LyricLine } from '../../shared/types'
 import { onTick } from '../state'
 
-let lines: LyricLine[] = []
+let synced: LyricLine[] | null = null
+let lineCount = 0
+let durationMs = 0
+let live = false
 let activeIdx = -1
 let currentTrack = ''
 
 export function initLyrics(): void {
   onTick((pos) => {
-    if (!lines.length) return
+    if (!live || !lineCount) return
     let idx = -1
-    for (let i = 0; i < lines.length; i++) { const ln = lines[i]; if (ln && ln.timeMs <= pos) idx = i; else break }
+    if (synced && synced.length) {
+      // exact: last line whose timestamp has passed
+      for (let i = 0; i < synced.length; i++) { const ln = synced[i]; if (ln && ln.timeMs <= pos) idx = i; else break }
+    } else if (durationMs > 0) {
+      // approximate: scroll proportionally to playback progress (no timestamps available)
+      const frac = Math.max(0, Math.min(0.999, pos / durationMs))
+      idx = Math.floor(frac * lineCount)
+    }
     if (idx !== activeIdx) { activeIdx = idx; paintActive() }
   })
 }
@@ -17,25 +27,37 @@ export function initLyrics(): void {
 export async function loadLyricsFor(np: NowPlaying): Promise<void> {
   if (np.trackId === currentTrack) return
   currentTrack = np.trackId
-  lines = []; activeIdx = -1
+  synced = null; activeIdx = -1; lineCount = 0; live = false; durationMs = np.durationMs
   render(['…'])
   const res: Lyrics = await window.np.getLyrics({
     trackId: np.trackId, artist: np.artist, title: np.title, album: np.album, durationMs: np.durationMs,
   })
   if (np.trackId !== currentTrack) return
-  if (res.synced && res.synced.length) { lines = res.synced; render(lines.map((l) => l.text || '♪')) }
-  else if (res.plain) { lines = []; render(res.plain.split(/\r?\n/)) }
-  else { lines = []; render(['Paroles indisponibles']) }
+  if (res.synced && res.synced.length) {
+    synced = res.synced; live = true
+    render(res.synced.map((l) => l.text || '♪'))
+  } else if (res.plain) {
+    live = true
+    render(res.plain.split(/\r?\n/))
+  } else {
+    render(['Paroles indisponibles'])
+  }
 }
 
 function render(texts: string[]): void {
   const box = document.getElementById('lyrics')!
-  box.classList.toggle('plain', !lines.length)
+  activeIdx = -1
+  lineCount = texts.length
   box.innerHTML = ''
   for (const t of texts) {
     const div = document.createElement('div'); div.className = 'lyric'; div.textContent = t
     box.appendChild(div)
   }
+  // half-height spacers top and bottom so any line (first/last included) can center
+  const pad = Math.round(box.clientHeight / 2)
+  box.style.paddingTop = `${pad}px`
+  box.style.paddingBottom = `${pad}px`
+  box.scrollTop = 0
 }
 
 function paintActive(): void {
