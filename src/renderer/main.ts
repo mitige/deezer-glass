@@ -1,5 +1,8 @@
 import './styles/app.css'
-import { state, startTicker, onTick } from './state'
+import { state, startTicker } from './state'
+import { setBackground } from './ui/background'
+import { applyPalette } from './ui/palette'
+import { initProgress } from './ui/progress'
 import type { NowPlaying } from '../shared/types'
 
 const $ = (id: string) => document.getElementById(id)!
@@ -9,18 +12,13 @@ window.np.onUpdate((np: NowPlaying) => {
   $('title').textContent = np.title || 'En attente de lecture'
   $('artist').textContent = np.artist
   $('art').style.backgroundImage = np.artDataUrl ? `url(${np.artDataUrl})` : 'none'
+
+  if ($('title').dataset.track !== np.trackId) {
+    $('title').dataset.track = np.trackId
+    applyPalette(np.artDataUrl)
+    setBackground(np.artDataUrl, np.trackId)
+  }
 })
 
-onTick((pos, np) => {
-  const pct = np.durationMs ? (pos / np.durationMs) * 100 : 0
-  $('bar').style.width = `${pct}%`
-  $('tcur').textContent = fmt(pos)
-  $('trem').textContent = '-' + fmt(Math.max(0, np.durationMs - pos))
-})
-
-function fmt(ms: number): string {
-  const s = Math.floor(ms / 1000)
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-}
-
+initProgress()
 startTicker()
