@@ -12,13 +12,27 @@ window.np.onUpdate((np: NowPlaying) => {
   state.np = np
   $('title').textContent = np.title || 'En attente de lecture'
   $('artist').textContent = np.artist
-  $('art').style.backgroundImage = np.artDataUrl ? `url(${np.artDataUrl})` : 'none'
 
   if ($('title').dataset.track !== np.trackId) {
-    $('title').dataset.track = np.trackId
+    const tid = np.trackId
+    $('title').dataset.track = tid
+
+    // instant: low-res SMTC thumbnail
+    $('art').style.backgroundImage = np.artDataUrl ? `url(${np.artDataUrl})` : 'none'
     applyPalette(np.artDataUrl)
-    setBackground(np.artDataUrl, np.trackId)
+    setBackground(np.artDataUrl, tid)
     loadLyricsFor(np)
+
+    // upgrade: high-res cover (Deezer 1000x1000, iTunes fallback), fetched in main as a data URL
+    if (np.artist && np.title) {
+      window.np.resolveCover({ trackId: tid, artist: np.artist, title: np.title }).then((hi) => {
+        if (hi && $('title').dataset.track === tid) {
+          $('art').style.backgroundImage = `url(${hi})`
+          applyPalette(hi)
+          setBackground(hi, tid + ':hi')
+        }
+      })
+    }
   }
 })
 

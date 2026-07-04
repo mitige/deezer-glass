@@ -1,7 +1,7 @@
-export function setBackground(artDataUrl: string | null, trackId: string): void {
+export function setBackground(artDataUrl: string | null, sig: string): void {
   const bg = document.getElementById('bg')!
-  if (bg.dataset.track === trackId) return
-  bg.dataset.track = trackId
+  if (bg.dataset.sig === sig) return
+  bg.dataset.sig = sig
 
   const layer = document.createElement('div')
   layer.className = 'bg-layer'
