@@ -16,6 +16,7 @@ export function quantize(px: Uint8ClampedArray): Palette {
   for (let i = 0; i + 3 < px.length; i += 4) {
     const r = px[i], g = px[i + 1], b = px[i + 2]
     sr += r; sg += g; sb += b; n++
+    // vibrancy = saturation, biased toward mid-luminance (avoids picking near-black or near-white)
     const s = sat(r, g, b) * (0.4 + 0.6 * (1 - Math.abs(lum(r, g, b) - 0.5) * 2))
     if (s > bestVib.s) bestVib = { s, r, g, b }
     const l = lum(r, g, b)

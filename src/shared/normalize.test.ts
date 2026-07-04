@@ -6,6 +6,13 @@ describe('normalizeForMatch', () => {
     expect(normalizeForMatch('Brittany  Howard  ')).toBe('brittany howard')
     expect(normalizeForMatch('Café — Déjà')).toBe('cafe deja')
   })
+  it('does not strip a leading "with"', () => {
+    expect(normalizeForMatch('With Or Without You')).toBe('with or without you')
+  })
+  it('strips an un-parenthesized trailing feat/ft section', () => {
+    expect(normalizeForMatch('Some Song feat. Another Artist')).toBe('some song')
+    expect(normalizeForMatch('Some Song ft. X')).toBe('some song')
+  })
 })
 
 describe('makeTrackId', () => {
