@@ -24,17 +24,23 @@ describe('pickLrclibResult', () => {
     { trackName: 'Red Flags', artistName: 'Brittany Howard', duration: 208, syncedLyrics: '[00:02.00]hi', plainLyrics: 'hi' },
     { trackName: 'Red Flags', artistName: 'Brittany Howard', duration: 400, syncedLyrics: '[00:03.00]long', plainLyrics: 'long' },
   ]
-  it('prefers synced with a matching title and closest duration', () => {
-    const r = pickLrclibResult(results, { title: 'Red Flags', durationMs: 208_000 })
+  it('prefers synced with a matching title/artist and closest duration', () => {
+    const r = pickLrclibResult(results, { title: 'Red Flags', artist: 'Brittany Howard', durationMs: 208_000 })
     expect(r.synced).toEqual([{ timeMs: 2000, text: 'hi' }])
   })
   it('never syncs against a far-off-duration edit (falls back to plain)', () => {
-    const r = pickLrclibResult([results[2]], { title: 'Red Flags', durationMs: 208_000 })
+    const r = pickLrclibResult([results[2]], { title: 'Red Flags', artist: 'Brittany Howard', durationMs: 208_000 })
     expect(r.synced).toBeNull()
     expect(r.plain).toBe('long')
   })
+  it('rejects a title collision on a symbol title ("(+34)" must not match "Groovin")', () => {
+    const hits = [{ trackName: 'Groovin', artistName: 'Pato Banton', duration: 145, syncedLyrics: '[00:01.00]sunshine', plainLyrics: 'sunshine' }]
+    const r = pickLrclibResult(hits, { title: '(+34)', artist: 'Pato', durationMs: 145_000 })
+    expect(r.synced).toBeNull()
+    expect(r.plain).toBeNull()
+  })
   it('returns empty when nothing has lyrics', () => {
-    expect(pickLrclibResult([], { title: 'x', durationMs: 1000 })).toEqual({ synced: null, plain: null, source: 'lrclib' })
+    expect(pickLrclibResult([], { title: 'x', artist: 'y', durationMs: 1000 })).toEqual({ synced: null, plain: null, source: 'lrclib' })
   })
 })
 

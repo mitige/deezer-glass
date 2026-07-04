@@ -20,7 +20,7 @@ async function fromLrclib(t: Track): Promise<Lyrics | null> {
   try {
     const res = await fetch(buildLrclibSearchUrl(t), { headers: { 'User-Agent': UA } })
     if (res.ok) {
-      const picked = pickLrclibResult(await res.json(), { title: t.title, durationMs: t.durationMs })
+      const picked = pickLrclibResult(await res.json(), { title: t.title, artist: t.artist, durationMs: t.durationMs })
       if (picked.synced?.length) return picked
       if (!got?.plain && picked.plain) got = picked
     }
