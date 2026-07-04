@@ -3,7 +3,7 @@ export function buildGeniusSearchUrl(artist: string, title: string): string {
 }
 
 function norm(s: string): string {
-  return (s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 }
 
 export function pickGeniusUrl(json: unknown, artist: string, title: string): string | null {

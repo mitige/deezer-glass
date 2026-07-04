@@ -1,4 +1,6 @@
-function norm(s: string): string { return (s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() }
+function norm(s: string): string {
+  return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
 
 export function buildDeezerSearchUrl(artist: string, title: string): string {
   return `https://api.deezer.com/search?q=${encodeURIComponent(`${artist} ${title}`.trim())}&limit=5`

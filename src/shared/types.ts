@@ -14,7 +14,7 @@ export interface NowPlaying {
 }
 
 export interface LyricLine { timeMs: number; text: string }
-export interface Lyrics { synced: LyricLine[] | null; plain: string | null; source: 'lrclib' | 'genius' | 'none' }
+export interface Lyrics { synced: LyricLine[] | null; plain: string | null; source: 'lrclib' | 'genius' | 'musixmatch' | 'lyricsovh' | 'none' }
 export interface ClipResult { embedUrl: string | null; videoId: string | null }
 
 export interface Palette { dominant: string; vibrant: string; dark: string; ink: string }

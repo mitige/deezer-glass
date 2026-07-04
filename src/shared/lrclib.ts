@@ -37,7 +37,7 @@ export function pickLrclibResult(results: unknown, target: { title: string; dura
   }
   const byDur = (a: LrclibRecord, b: LrclibRecord) => durDelta(a) - durDelta(b)
 
-  const synced = list.filter((r) => r.syncedLyrics && titleOk(r) && durDelta(r) <= 8).sort(byDur)[0]
+  const synced = list.filter((r) => r.syncedLyrics && titleOk(r) && durDelta(r) <= 15).sort(byDur)[0]
   if (synced?.syncedLyrics) return mapLrclibResponse(synced)
 
   const plain = list.filter((r) => r.plainLyrics && titleOk(r)).sort(byDur)[0]
