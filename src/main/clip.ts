@@ -5,7 +5,7 @@ export async function resolveClip(track: { artist: string; title: string }): Pro
   try {
     const q = encodeURIComponent(`${track.artist} ${track.title} official video`)
     const res = await fetch(`https://www.youtube.com/results?search_query=${q}`, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en' },
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en', Cookie: 'CONSENT=YES+1' },
     })
     if (res.ok) {
       const id = extractVideoId(await res.text())
