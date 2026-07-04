@@ -1,5 +1,5 @@
 const BASE = 'https://www.youtube-nocookie.com'
-const COMMON = 'autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1'
+const COMMON = 'autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1&iv_load_policy=3&disablekb=1&fs=1'
 
 export function buildSearchEmbedUrl(artist: string, title: string): string {
   const q = `${artist} ${title} official video`.trim()

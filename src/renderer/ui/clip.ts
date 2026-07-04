@@ -32,17 +32,13 @@ async function toggle(np: NowPlaying | null): Promise<void> {
 
   const frame = document.createElement('iframe')
   frame.id = 'clip-frame'
-  frame.src = `${embedUrl}&vq=hd1080`
+  frame.src = embedUrl
   frame.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture'
   frame.setAttribute('frameborder', '0')
   wrap.appendChild(frame)
 
-  const close = document.createElement('button')
-  close.id = 'clip-close'
-  close.setAttribute('aria-label', 'Fermer le clip')
-  close.textContent = '×'
-  close.addEventListener('click', (e) => { e.stopPropagation(); teardown() })
-  wrap.appendChild(close)
+  wrap.appendChild(button('clip-fs', '⤢', 'Plein écran', (e) => { e.stopPropagation(); void toggleFullscreen(wrap) }))
+  wrap.appendChild(button('clip-close', '×', 'Fermer le clip', (e) => { e.stopPropagation(); teardown() }))
 
   panel.appendChild(wrap)
   requestAnimationFrame(() => wrap.classList.add('visible'))
@@ -57,8 +53,25 @@ async function toggle(np: NowPlaying | null): Promise<void> {
   })
 }
 
+function button(id: string, label: string, aria: string, onClick: (e: MouseEvent) => void): HTMLButtonElement {
+  const b = document.createElement('button')
+  b.id = id
+  b.textContent = label
+  b.setAttribute('aria-label', aria)
+  b.addEventListener('click', onClick)
+  return b
+}
+
+async function toggleFullscreen(el: HTMLElement): Promise<void> {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen()
+    else await el.requestFullscreen()
+  } catch { /* fullscreen may be denied — ignore */ }
+}
+
 function teardown(): void {
   showing = false
+  if (document.fullscreenElement) void document.exitFullscreen().catch(() => {})
   const wrap = document.getElementById('clip-wrap')
   if (wrap) { wrap.classList.remove('visible'); setTimeout(() => wrap.remove(), 350) }
 }
