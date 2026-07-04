@@ -3,6 +3,7 @@ import { state, startTicker } from './state'
 import { setBackground } from './ui/background'
 import { applyPalette } from './ui/palette'
 import { initProgress } from './ui/progress'
+import { initLyrics, loadLyricsFor } from './ui/lyrics'
 import type { NowPlaying } from '../shared/types'
 
 const $ = (id: string) => document.getElementById(id)!
@@ -17,8 +18,10 @@ window.np.onUpdate((np: NowPlaying) => {
     $('title').dataset.track = np.trackId
     applyPalette(np.artDataUrl)
     setBackground(np.artDataUrl, np.trackId)
+    loadLyricsFor(np)
   }
 })
 
 initProgress()
+initLyrics()
 startTicker()
