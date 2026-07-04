@@ -31,7 +31,8 @@ async function fromGenius(t: Track): Promise<string | null> {
 
 export async function getLyrics(track: Track): Promise<Lyrics> {
   if (mem.has(track.trackId)) return mem.get(track.trackId)!
-  if (cache[track.trackId]) { mem.set(track.trackId, cache[track.trackId]); return cache[track.trackId] }
+  const cached = cache[track.trackId]
+  if (cached) { mem.set(track.trackId, cached); return cached }
 
   const lrc = await fromLrclib(track)
   let result: Lyrics

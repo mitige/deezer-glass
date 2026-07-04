@@ -9,7 +9,7 @@ export function initLyrics(): void {
   onTick((pos) => {
     if (!lines.length) return
     let idx = -1
-    for (let i = 0; i < lines.length; i++) { if (lines[i].timeMs <= pos) idx = i; else break }
+    for (let i = 0; i < lines.length; i++) { const ln = lines[i]; if (ln && ln.timeMs <= pos) idx = i; else break }
     if (idx !== activeIdx) { activeIdx = idx; paintActive() }
   })
 }

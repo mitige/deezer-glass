@@ -31,7 +31,7 @@ export function extractGeniusLyrics(html: string): string | null {
   const blocks: string[] = []
   let m: RegExpExecArray | null
   CONTAINER.lastIndex = 0
-  while ((m = CONTAINER.exec(html)) !== null) blocks.push(m[1])
+  while ((m = CONTAINER.exec(html)) !== null) blocks.push(m[1] ?? '')
   if (!blocks.length) return null
   const text = blocks.join('\n')
     .replace(/<br\s*\/?>/gi, '\n')

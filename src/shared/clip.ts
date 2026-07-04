@@ -12,5 +12,5 @@ export function buildIdEmbedUrl(videoId: string): string {
 
 export function extractVideoId(html: string): string | null {
   const m = html.match(/"videoId":"([\w-]{11})"/)
-  return m ? m[1] : null
+  return m?.[1] ?? null
 }
