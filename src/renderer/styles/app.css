@@ -60,7 +60,7 @@ body { height: 100vh; overflow: hidden; background: #0b0f17; color: #fff; font-f
 @keyframes sheen { from { transform: rotate(9deg) translateX(-8%); } to { transform: rotate(9deg) translateX(10%); } }
 
 #left { display: flex; flex-direction: column; justify-content: center; }
-#art { width: 100%; aspect-ratio: 1; height: auto; border-radius: 16px;
+#art { width: 100%; aspect-ratio: 1; height: auto; border-radius: 16px; position: relative; cursor: pointer;
   background-size: cover; background-position: center; background-color: rgba(255,255,255,.06);
   box-shadow: 0 18px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.35); }
 #title { font-size: 27px; font-weight: 600; margin-top: 20px; letter-spacing: .2px;
@@ -87,13 +87,19 @@ body { height: 100vh; overflow: hidden; background: #0b0f17; color: #fff; font-f
 #lyrics.plain .lyric { font-size: 15px; color: rgba(255,255,255,.6); line-height: 1.7; }
 
 #controls { position: fixed; bottom: 22px; right: 26px; z-index: 6; display: flex; gap: 8px; align-items: center; }
-#clip-toggle { -webkit-app-region: no-drag; cursor: pointer;
-  background: rgba(255,255,255,.1); color: rgba(255,255,255,.85);
-  border: 1px solid rgba(255,255,255,.22); border-radius: 20px; padding: 7px 15px;
-  font-size: 12px; letter-spacing: .3px; backdrop-filter: blur(14px);
-  transition: background .2s ease, color .2s ease; }
-#clip-toggle:hover { background: rgba(255,255,255,.18); }
-#clip-toggle.on { background: var(--art-accent); color: #0b0b0b; border-color: transparent; }
+#art::before { content: ''; position: absolute; inset: 0; border-radius: 16px;
+  background: rgba(0,0,0,.28); opacity: 0; transition: opacity .25s ease; }
+#art::after { content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-40%, -50%); border-style: solid; border-width: 15px 0 15px 24px;
+  border-color: transparent transparent transparent rgba(255,255,255,.95);
+  opacity: 0; transition: opacity .25s ease; filter: drop-shadow(0 2px 10px rgba(0,0,0,.55)); }
+#art:hover::before, #art:hover::after { opacity: 1; }
+#clip-close { position: absolute; top: 14px; right: 14px; z-index: 6; -webkit-app-region: no-drag;
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.4); color: #fff;
+  font-size: 18px; line-height: 1; backdrop-filter: blur(10px);
+  opacity: .75; transition: opacity .2s ease, background .2s ease; }
+#clip-close:hover { opacity: 1; background: rgba(0,0,0,.6); }
 #clip-wrap { position: absolute; inset: 0; z-index: 5; border-radius: 28px; overflow: hidden;
   background: #000; opacity: 0; transition: opacity .35s ease; }
 #clip-wrap.visible { opacity: 1; }

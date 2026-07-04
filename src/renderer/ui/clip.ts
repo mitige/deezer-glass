@@ -7,8 +7,7 @@ let track = ''
 let lastSync = 0
 
 export function initClip(getNp: () => NowPlaying | null): void {
-  const btn = document.getElementById('clip-toggle')
-  btn?.addEventListener('click', () => { void toggle(getNp()) })
+  document.getElementById('art')?.addEventListener('click', () => { void toggle(getNp()) })
   onTick((pos) => {
     if (!showing) return
     const now = Date.now()
@@ -23,7 +22,6 @@ async function toggle(np: NowPlaying | null): Promise<void> {
   if (!np) return
   showing = true
   track = np.trackId
-  document.getElementById('clip-toggle')?.classList.add('on')
 
   const { embedUrl } = await window.np.resolveClip({ artist: np.artist, title: np.title })
   if (!embedUrl || track !== np.trackId || !showing) { teardown(); return }
@@ -31,12 +29,21 @@ async function toggle(np: NowPlaying | null): Promise<void> {
   const panel = document.getElementById('panel')!
   const wrap = document.createElement('div')
   wrap.id = 'clip-wrap'
+
   const frame = document.createElement('iframe')
   frame.id = 'clip-frame'
   frame.src = `${embedUrl}&vq=hd1080`
   frame.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture'
   frame.setAttribute('frameborder', '0')
   wrap.appendChild(frame)
+
+  const close = document.createElement('button')
+  close.id = 'clip-close'
+  close.setAttribute('aria-label', 'Fermer le clip')
+  close.textContent = '×'
+  close.addEventListener('click', (e) => { e.stopPropagation(); teardown() })
+  wrap.appendChild(close)
+
   panel.appendChild(wrap)
   requestAnimationFrame(() => wrap.classList.add('visible'))
 
@@ -52,7 +59,6 @@ async function toggle(np: NowPlaying | null): Promise<void> {
 
 function teardown(): void {
   showing = false
-  document.getElementById('clip-toggle')?.classList.remove('on')
   const wrap = document.getElementById('clip-wrap')
   if (wrap) { wrap.classList.remove('visible'); setTimeout(() => wrap.remove(), 350) }
 }
