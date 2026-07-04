@@ -4,6 +4,7 @@ import { setBackground } from './ui/background'
 import { applyPalette } from './ui/palette'
 import { initProgress } from './ui/progress'
 import { initLyrics, loadLyricsFor } from './ui/lyrics'
+import { initClip } from './ui/clip'
 import type { NowPlaying } from '../shared/types'
 
 const $ = (id: string) => document.getElementById(id)!
@@ -38,4 +39,5 @@ window.np.onUpdate((np: NowPlaying) => {
 
 initProgress()
 initLyrics()
+initClip(() => state.np)
 startTicker()
