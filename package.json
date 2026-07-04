@@ -1,0 +1,28 @@
+{
+  "name": "deezer-glass",
+  "version": "0.1.0",
+  "description": "Liquid-glass now-playing visualizer for Deezer (Windows/SMTC)",
+  "author": "mitige",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "build:native": "napi build --release --cargo-cwd native/smtc --js false native/smtc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke:smtc": "node scripts/smtc-smoke.mjs",
+    "dist": "npm run build:native && electron-vite build && electron-builder --win nsis"
+  },
+  "dependencies": {
+    "@deezer-glass/smtc": "file:native/smtc"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.4",
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.0",
+    "vitest": "^2.1.0"
+  }
+}

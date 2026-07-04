@@ -1,0 +1,8 @@
+{
+  "name": "@deezer-glass/smtc",
+  "version": "0.1.0",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "napi": { "name": "smtc", "triples": { "defaults": false, "additional": ["x86_64-pc-windows-msvc"] } },
+  "files": ["index.js", "index.d.ts", "*.node"]
+}
