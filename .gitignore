@@ -5,6 +5,7 @@ out/
 build/Release/
 *.node
 native/smtc/target/
+release/
 *.log
 .DS_Store
 Thumbs.db

@@ -1,0 +1,35 @@
+appId: com.mitige.deezerglass
+productName: Deezer Glass
+copyright: © mitige
+directories:
+  output: release
+asar: true
+asarUnpack:
+  - "**/*.node"
+files:
+  - out/**
+  - package.json
+  # @deezer-glass/smtc is a `file:` dep symlinked to ../native/smtc, so
+  # electron-builder resolves it to its real path and matches excludes
+  # relative to native/ (not node_modules/). Match the smtc package dir by
+  # name with a **-prefixed glob so the Rust build/source artifacts are
+  # excluded regardless of whether the dep is symlinked or vendored.
+  - "!**/smtc/target/**"
+  - "!**/smtc/src/**"
+  - "!**/smtc/Cargo.*"
+  - "!**/smtc/build.rs"
+  - "!**/smtc/.gitignore"
+  # keep the node_modules-anchored forms too, correct for a non-symlinked install
+  - "!node_modules/@deezer-glass/smtc/target/**"
+  - "!node_modules/@deezer-glass/smtc/src/**"
+  - "!node_modules/@deezer-glass/smtc/Cargo.*"
+  - "!node_modules/@deezer-glass/smtc/build.rs"
+win:
+  target:
+    - nsis
+  artifactName: ${productName}-${version}-setup.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: Deezer Glass
