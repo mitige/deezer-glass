@@ -98,3 +98,12 @@ body { height: 100vh; overflow: hidden; background: #0b0f17; color: #fff; font-f
   background: #000; opacity: 0; transition: opacity .35s ease; }
 #clip-wrap.visible { opacity: 1; }
 #clip-frame { width: 100%; height: 100%; border: 0; display: block; }
+#win-min, #win-close { -webkit-app-region: no-drag; cursor: pointer; width: 30px; height: 30px;
+  border-radius: 50%; border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); font-size: 14px; line-height: 1;
+  backdrop-filter: blur(14px); opacity: 0; transition: opacity .25s ease, background .2s ease; }
+#controls:hover #win-min, #controls:hover #win-close { opacity: 1; }
+#win-min:hover { background: rgba(255,255,255,.2); }
+#win-close:hover { background: rgba(220,60,60,.7); border-color: transparent; }
+body.idle #lyrics, body.idle #progress, body.idle #times, body.idle #artist { opacity: 0; transition: opacity .4s ease; }
+body.idle #art { background: rgba(255,255,255,.06); }

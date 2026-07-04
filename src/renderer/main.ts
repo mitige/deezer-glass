@@ -5,26 +5,25 @@ import { applyPalette } from './ui/palette'
 import { initProgress } from './ui/progress'
 import { initLyrics, loadLyricsFor } from './ui/lyrics'
 import { initClip } from './ui/clip'
+import { initChrome } from './ui/chrome'
 import type { NowPlaying } from '../shared/types'
 
 const $ = (id: string) => document.getElementById(id)!
 
 window.np.onUpdate((np: NowPlaying) => {
   state.np = np
+  const idle = np.status === 'none' && !np.title
+  document.body.classList.toggle('idle', idle)
   $('title').textContent = np.title || 'En attente de lecture'
   $('artist').textContent = np.artist
 
   if ($('title').dataset.track !== np.trackId) {
     const tid = np.trackId
     $('title').dataset.track = tid
-
-    // instant: low-res SMTC thumbnail
     $('art').style.backgroundImage = np.artDataUrl ? `url(${np.artDataUrl})` : 'none'
     applyPalette(np.artDataUrl)
     setBackground(np.artDataUrl, tid)
     loadLyricsFor(np)
-
-    // upgrade: high-res cover (Deezer 1000x1000, iTunes fallback), fetched in main as a data URL
     if (np.artist && np.title) {
       window.np.resolveCover({ trackId: tid, artist: np.artist, title: np.title }).then((hi) => {
         if (hi && $('title').dataset.track === tid) {
@@ -37,6 +36,7 @@ window.np.onUpdate((np: NowPlaying) => {
   }
 })
 
+initChrome()
 initProgress()
 initLyrics()
 initClip(() => state.np)
