@@ -42,6 +42,10 @@ describe('extractGeniusLyrics', () => {
     const html = '<div data-lyrics-container>1 Contributor<br/>[Refrain]<br/>La coke, on la recoupe</div>'
     expect(extractGeniusLyrics(html)).toBe('[Refrain]\nLa coke, on la recoupe')
   })
+  it('captures the full container despite a nested header <div> (modern Genius layout)', () => {
+    const html = '<div data-lyrics-container="true"><div>7 Contributors</div><br/>[Intro]<br/>Real line one<br/>Real line two</div>'
+    expect(extractGeniusLyrics(html)).toBe('[Intro]\nReal line one\nReal line two')
+  })
   it('returns null when no lyrics container present', () => {
     expect(extractGeniusLyrics('<div>nope</div>')).toBeNull()
   })

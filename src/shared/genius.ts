@@ -22,16 +22,30 @@ export function pickGeniusUrl(json: unknown, artist: string, title: string): str
   return null // no blind fallback — showing nothing beats showing the wrong song's lyrics
 }
 
-const CONTAINER = /data-lyrics-container[^>]*>([\s\S]*?)<\/div>/gi
 const NAMED: Record<string, string> = {
   '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ',
 }
 
 export function extractGeniusLyrics(html: string): string | null {
+  // Match each [data-lyrics-container] block's closing </div> with balanced depth counting, so
+  // nested <div>s (Genius wraps a "N Contributors" header + annotation spans inside the container)
+  // don't truncate the capture at the first </div> — the old non-greedy regex grabbed only the header.
   const blocks: string[] = []
+  const open = /<div[^>]*\bdata-lyrics-container\b[^>]*>/gi
+  const tag = /<\/?div\b[^>]*>/gi
   let m: RegExpExecArray | null
-  CONTAINER.lastIndex = 0
-  while ((m = CONTAINER.exec(html)) !== null) blocks.push(m[1] ?? '')
+  while ((m = open.exec(html)) !== null) {
+    const start = m.index + m[0].length
+    tag.lastIndex = start
+    let depth = 1
+    let end = html.length
+    let t: RegExpExecArray | null
+    while ((t = tag.exec(html)) !== null) {
+      if (t[0][1] === '/') { depth--; if (depth === 0) { end = t.index; break } } else depth++
+    }
+    blocks.push(html.slice(start, end))
+    open.lastIndex = Math.max(open.lastIndex, end)
+  }
   if (!blocks.length) return null
   const text = blocks.join('\n')
     .replace(/<br\s*\/?>/gi, '\n')
