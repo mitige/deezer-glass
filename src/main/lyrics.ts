@@ -1,5 +1,6 @@
 import { buildLrclibGetUrl, buildLrclibSearchUrl, mapLrclibResponse, pickLrclibResult } from '../shared/lrclib'
 import { buildGeniusSearchUrl, pickGeniusUrl, extractGeniusLyrics } from '../shared/genius'
+import { getMusixmatch } from './musixmatch'
 import type { Lyrics } from '../shared/types'
 import { loadLyricsCache, saveLyricsCache } from './store'
 
@@ -16,7 +17,6 @@ async function fromLrclib(t: Track): Promise<Lyrics | null> {
     if (res.ok) got = mapLrclibResponse(await res.json())
   } catch { /* exact-match endpoint unavailable */ }
   if (got?.synced?.length) return got
-  // search fallback — finds time-synced lyrics the exact-match endpoint misses
   try {
     const res = await fetch(buildLrclibSearchUrl(t), { headers: { 'User-Agent': UA } })
     if (res.ok) {
@@ -28,7 +28,7 @@ async function fromLrclib(t: Track): Promise<Lyrics | null> {
   return got
 }
 
-async function fromGenius(t: Track): Promise<string | null> {
+async function geniusPlain(t: Track): Promise<string | null> {
   try {
     const s = await fetch(buildGeniusSearchUrl(t.artist, t.title), { headers: { 'User-Agent': UA, Accept: 'application/json' } })
     if (!s.ok) return null
@@ -40,20 +40,36 @@ async function fromGenius(t: Track): Promise<string | null> {
   } catch { return null }
 }
 
+async function lyricsOvhPlain(t: Track): Promise<string | null> {
+  try {
+    const r = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(t.artist)}/${encodeURIComponent(t.title)}`)
+    if (!r.ok) return null
+    const j = await r.json()
+    return typeof j?.lyrics === 'string' && j.lyrics.trim() ? j.lyrics : null
+  } catch { return null }
+}
+
 export async function getLyrics(track: Track): Promise<Lyrics> {
   if (mem.has(track.trackId)) return mem.get(track.trackId)!
   const cached = cache[track.trackId]
   if (cached) { mem.set(track.trackId, cached); return cached }
 
+  // synced tier — first source with timestamps wins
   const lrc = await fromLrclib(track)
-  let result: Lyrics
-  if (lrc?.synced?.length) {
-    result = lrc // synced wins — enables karaoke highlight
-  } else {
-    const geniusPlain = lrc?.plain ? null : await fromGenius(track)
-    const plain = lrc?.plain ?? geniusPlain ?? null
-    const source: Lyrics['source'] = lrc?.plain ? 'lrclib' : geniusPlain ? 'genius' : 'none'
-    result = { synced: null, plain, source }
+  let result: Lyrics | null = null
+  if (lrc?.synced?.length) result = lrc
+  if (!result) {
+    const mxm = await getMusixmatch(track)
+    if (mxm?.synced?.length) result = mxm
+    // plain tier — first non-empty
+    if (!result) {
+      let plain: string | null = lrc?.plain ?? null
+      let source: Lyrics['source'] = plain ? 'lrclib' : 'none'
+      if (!plain && mxm?.plain) { plain = mxm.plain; source = 'musixmatch' }
+      if (!plain) { const g = await geniusPlain(track); if (g) { plain = g; source = 'genius' } }
+      if (!plain) { const o = await lyricsOvhPlain(track); if (o) { plain = o; source = 'lyricsovh' } }
+      result = { synced: null, plain, source }
+    }
   }
 
   mem.set(track.trackId, result)
