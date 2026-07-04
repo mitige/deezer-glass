@@ -1,0 +1,10 @@
+node_modules/
+dist/
+out/
+.vite/
+build/Release/
+*.node
+native/smtc/target/
+*.log
+.DS_Store
+Thumbs.db
