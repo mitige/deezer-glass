@@ -147,10 +147,30 @@ export default defineConfig({
 
 `externalizeDepsPlugin` keeps `@deezer-glass/smtc` (a `.node` addon) out of the bundle so it is `require`d at runtime.
 
-- [ ] **Step 5: Commit** (native dep is not built yet, so skip `npm install` until Phase 2; installing now would fail on the `file:` dep)
+- [ ] **Step 5: Create the native package stub so the `file:` dep resolves at install time**
+
+`npm install` needs `native/smtc/package.json` to exist to link `@deezer-glass/smtc` (the `.node` binary is not required until runtime in Phase 3). Create `native/smtc/package.json`:
+
+```json
+{
+  "name": "@deezer-glass/smtc",
+  "version": "0.1.0",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "napi": { "name": "smtc", "triples": { "defaults": false, "additional": ["x86_64-pc-windows-msvc"] } },
+  "files": ["index.js", "index.d.ts", "*.node"]
+}
+```
+
+- [ ] **Step 6: Install dependencies**
+
+Run: `npm install`
+Expected: succeeds; `@deezer-glass/smtc` links to `native/smtc/` (a warning about the missing `main`/`.node` is fine — it is built in Phase 2). `node_modules` now has vitest/electron/electron-vite available.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add package.json tsconfig.json vitest.config.ts electron.vite.config.ts
+git add package.json package-lock.json tsconfig.json vitest.config.ts electron.vite.config.ts native/smtc/package.json
 git commit -m "chore: project scaffolding (electron-vite + vitest + ts config)"
 ```
 
@@ -694,7 +714,9 @@ fn main() {
 }
 ```
 
-- [ ] **Step 3: Write `native/smtc/package.json`**
+- [ ] **Step 3: Verify `native/smtc/package.json`**
+
+This file was already created in Task 0.1 Step 5 (so `npm install` could link the `file:` dep). Confirm it exists and matches:
 
 ```json
 {
