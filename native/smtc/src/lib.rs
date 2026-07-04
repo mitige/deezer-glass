@@ -9,6 +9,7 @@ use windows::Foundation::{EventRegistrationToken, TypedEventHandler};
 use windows::Media::Control::{
   GlobalSystemMediaTransportControlsSession as Session,
   GlobalSystemMediaTransportControlsSessionManager as SessionManager,
+  GlobalSystemMediaTransportControlsSessionMediaProperties as MediaProperties,
   GlobalSystemMediaTransportControlsSessionPlaybackStatus as PlaybackStatus,
 };
 use windows::Storage::Streams::{DataReader, InputStreamOptions};
@@ -27,6 +28,14 @@ pub struct NowPlaying {
   pub last_updated_ms: f64,
   pub rate: f64,
   pub status: String,
+}
+
+#[derive(Default, Clone)]
+struct MediaInfo {
+  title: String,
+  artist: String,
+  album: String,
+  art: Option<String>,
 }
 
 static RUNNING: AtomicBool = AtomicBool::new(false);
@@ -54,10 +63,12 @@ pub fn stop() {
 fn run(tsfn: Tsfn) -> windows::core::Result<()> {
   let manager = SessionManager::RequestAsync()?.get()?;
   let hooked: Arc<Mutex<Option<(Session, Vec<EventRegistrationToken>)>>> = Arc::new(Mutex::new(None));
+  let media_cache = Arc::new(Mutex::new(MediaInfo::default()));
 
   let rehook = {
     let hooked = hooked.clone();
     let tsfn = tsfn.clone();
+    let media_cache = media_cache.clone();
     move |mgr: &SessionManager| -> windows::core::Result<()> {
       let mut guard = hooked.lock().unwrap();
       if let Some((old, tokens)) = guard.take() {
@@ -67,32 +78,59 @@ fn run(tsfn: Tsfn) -> windows::core::Result<()> {
       }
       match mgr.GetCurrentSession() {
         Ok(session) => {
-          let emit = {
+          // Shared emitter: refreshes the media cache (title/artist/album/art)
+          // only when `refresh == true`, then always sends a snapshot built from
+          // the cache plus fresh timeline/playback data.
+          let emit: Arc<dyn Fn(&Session, bool) + Send + Sync> = {
             let tsfn = tsfn.clone();
-            move |s: &Session| {
-              if let Ok(np) = snapshot(s) {
+            let media_cache = media_cache.clone();
+            Arc::new(move |s: &Session, refresh: bool| {
+              if refresh {
+                let _ = refresh_media(s, &media_cache);
+              }
+              if let Ok(np) = snapshot(s, &media_cache) {
                 if RUNNING.load(Ordering::SeqCst) {
                   tsfn.call(np, ThreadsafeFunctionCallMode::NonBlocking);
                 }
               }
-            }
+            })
           };
+
+          // Only a track change refreshes the (expensive) album art + metadata.
           let t0 = session.MediaPropertiesChanged(&TypedEventHandler::new({
             let emit = emit.clone();
-            move |s: &Option<Session>, _| { if let Some(s) = s { emit(s) } Ok(()) }
+            move |s: &Option<Session>, _| {
+              if let Some(s) = s {
+                emit(s, true)
+              }
+              Ok(())
+            }
           }))?;
+          // Playback + timeline are frequent: reuse the cache (refresh == false).
           let t1 = session.PlaybackInfoChanged(&TypedEventHandler::new({
             let emit = emit.clone();
-            move |s: &Option<Session>, _| { if let Some(s) = s { emit(s) } Ok(()) }
+            move |s: &Option<Session>, _| {
+              if let Some(s) = s {
+                emit(s, false)
+              }
+              Ok(())
+            }
           }))?;
           let t2 = session.TimelinePropertiesChanged(&TypedEventHandler::new({
             let emit = emit.clone();
-            move |s: &Option<Session>, _| { if let Some(s) = s { emit(s) } Ok(()) }
+            move |s: &Option<Session>, _| {
+              if let Some(s) = s {
+                emit(s, false)
+              }
+              Ok(())
+            }
           }))?;
-          emit(&session);
+          // Populate the cache before any light event can fire.
+          emit(&session, true);
           *guard = Some((session, vec![t0, t1, t2]));
         }
         Err(_) => {
+          *media_cache.lock().unwrap() = MediaInfo::default();
           tsfn.call(none_snapshot(), ThreadsafeFunctionCallMode::NonBlocking);
         }
       }
@@ -122,13 +160,20 @@ fn none_snapshot() -> NowPlaying {
   }
 }
 
-fn snapshot(session: &Session) -> windows::core::Result<NowPlaying> {
+/// Fetch the media properties + thumbnail ONCE and store them in the cache.
+/// Called only on track (media) changes.
+fn refresh_media(session: &Session, cache: &Mutex<MediaInfo>) -> windows::core::Result<()> {
   let media = session.TryGetMediaPropertiesAsync()?.get()?;
   let title = media.Title().unwrap_or_default().to_string();
   let artist = media.Artist().unwrap_or_default().to_string();
   let album = media.AlbumTitle().unwrap_or_default().to_string();
-  let art_data_url = read_thumbnail(session).ok().flatten();
+  let art = read_thumbnail(&media).ok().flatten();
+  *cache.lock().unwrap() = MediaInfo { title, artist, album, art };
+  Ok(())
+}
 
+/// Build a snapshot from fresh timeline + playback info, reusing cached metadata.
+fn snapshot(session: &Session, cache: &Mutex<MediaInfo>) -> windows::core::Result<NowPlaying> {
   let info = session.GetPlaybackInfo()?;
   let status = match info.PlaybackStatus()? {
     PlaybackStatus::Playing => "playing",
@@ -143,15 +188,16 @@ fn snapshot(session: &Session) -> windows::core::Result<NowPlaying> {
   let duration_ms = (tl.EndTime()?.Duration as f64) / 10_000.0;
   let last_updated_ms = (tl.LastUpdatedTime()?.UniversalTime as f64 - 116_444_736_000_000_000.0) / 10_000.0;
 
+  let m = cache.lock().unwrap().clone();
   Ok(NowPlaying {
-    title, artist, album, art_data_url,
+    title: m.title, artist: m.artist, album: m.album, art_data_url: m.art,
     position_ms, duration_ms, last_updated_ms, rate,
     status: status.into(),
   })
 }
 
-fn read_thumbnail(session: &Session) -> windows::core::Result<Option<String>> {
-  let media = session.TryGetMediaPropertiesAsync()?.get()?;
+/// Encode the album-art thumbnail from already-fetched media properties.
+fn read_thumbnail(media: &MediaProperties) -> windows::core::Result<Option<String>> {
   let Ok(reference) = media.Thumbnail() else { return Ok(None) };
   let stream = reference.OpenReadAsync()?.get()?;
   let size = stream.Size()? as u32;
