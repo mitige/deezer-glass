@@ -1,4 +1,4 @@
-import { buildLrclibGetUrl, mapLrclibResponse } from '../shared/lrclib'
+import { buildLrclibGetUrl, buildLrclibSearchUrl, mapLrclibResponse, pickLrclibResult } from '../shared/lrclib'
 import { buildGeniusSearchUrl, pickGeniusUrl, extractGeniusLyrics } from '../shared/genius'
 import type { Lyrics } from '../shared/types'
 import { loadLyricsCache, saveLyricsCache } from './store'
@@ -10,11 +10,22 @@ const cache = loadLyricsCache() as Record<string, Lyrics>
 type Track = { trackId: string; artist: string; title: string; album: string; durationMs: number }
 
 async function fromLrclib(t: Track): Promise<Lyrics | null> {
+  let got: Lyrics | null = null
   try {
     const res = await fetch(buildLrclibGetUrl(t), { headers: { 'User-Agent': UA } })
-    if (!res.ok) return null
-    return mapLrclibResponse(await res.json())
-  } catch { return null }
+    if (res.ok) got = mapLrclibResponse(await res.json())
+  } catch { /* exact-match endpoint unavailable */ }
+  if (got?.synced?.length) return got
+  // search fallback — finds time-synced lyrics the exact-match endpoint misses
+  try {
+    const res = await fetch(buildLrclibSearchUrl(t), { headers: { 'User-Agent': UA } })
+    if (res.ok) {
+      const picked = pickLrclibResult(await res.json(), { title: t.title, durationMs: t.durationMs })
+      if (picked.synced?.length) return picked
+      if (!got?.plain && picked.plain) got = picked
+    }
+  } catch { /* search endpoint unavailable */ }
+  return got
 }
 
 async function fromGenius(t: Track): Promise<string | null> {

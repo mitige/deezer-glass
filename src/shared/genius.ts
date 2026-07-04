@@ -10,16 +10,16 @@ export function pickGeniusUrl(json: unknown, artist: string, title: string): str
   const hits = (json as { response?: { hits?: unknown[] } })?.response?.hits
   if (!Array.isArray(hits)) return null
   const wantT = norm(title), wantA = norm(artist)
-  let fallback: string | null = null
   for (const h of hits) {
     const r = (h as { result?: { url?: string; title?: string; primary_artist?: { name?: string } } })?.result
     const url = r?.url
     if (!url) continue
-    if (fallback === null) fallback = url
     const t = norm(r?.title ?? ''), a = norm(r?.primary_artist?.name ?? '')
-    if (wantT && t.includes(wantT) && (a.includes(wantA) || wantA.includes(a))) return url
+    const titleOk = !!wantT && !!t && (t.includes(wantT) || wantT.includes(t))
+    const artistOk = !!wantA && !!a && (a.includes(wantA) || wantA.includes(a))
+    if (titleOk && artistOk) return url
   }
-  return fallback
+  return null // no blind fallback — showing nothing beats showing the wrong song's lyrics
 }
 
 const CONTAINER = /data-lyrics-container[^>]*>([\s\S]*?)<\/div>/gi

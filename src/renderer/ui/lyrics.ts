@@ -16,8 +16,10 @@ export function initLyrics(): void {
       // exact: last line whose timestamp has passed
       for (let i = 0; i < synced.length; i++) { const ln = synced[i]; if (ln && ln.timeMs <= pos) idx = i; else break }
     } else if (durationMs > 0) {
-      // approximate: scroll proportionally to playback progress (no timestamps available)
-      const frac = Math.max(0, Math.min(0.999, pos / durationMs))
+      // approximate: map progress to a line, allowing for a typical intro/outro (no timestamps exist)
+      const INTRO = 8000, OUTRO = 8000
+      const span = Math.max(1, durationMs - INTRO - OUTRO)
+      const frac = Math.max(0, Math.min(0.999, (pos - INTRO) / span))
       idx = Math.floor(frac * lineCount)
     }
     if (idx !== activeIdx) { activeIdx = idx; paintActive() }

@@ -17,8 +17,8 @@ describe('pickGeniusUrl', () => {
   it('prefers the hit matching artist + title', () => {
     expect(pickGeniusUrl(json, 'Brittany Howard', 'Red Flags')).toBe('https://genius.com/brittany-howard-red-flags-lyrics')
   })
-  it('falls back to the first hit when nothing matches', () => {
-    expect(pickGeniusUrl(json, 'Nobody', 'Nothing')).toBe('https://genius.com/x-other-lyrics')
+  it('returns null when nothing matches (avoids the wrong song)', () => {
+    expect(pickGeniusUrl(json, 'Nobody', 'Nothing')).toBeNull()
   })
   it('returns null on empty/invalid', () => {
     expect(pickGeniusUrl({ response: { hits: [] } }, 'a', 'b')).toBeNull()
