@@ -1,11 +1,21 @@
 import type { NowPlaying } from '../../shared/types'
 import { interpolatePosition } from '../../shared/playback'
+import { onTick } from '../state'
 
 let showing = false
 let track = ''
+let lastPos = -1
 
 export function initClip(getNp: () => NowPlaying | null): void {
   document.getElementById('art')?.addEventListener('click', () => { void toggle(getNp()) })
+  onTick((pos) => {
+    // Re-sync the clip to the music ONLY when the Deezer position JUMPS (a seek/skip). During
+    // normal playback both run at 1×, so no seeking is needed and the player's title/controls
+    // chrome is never woken. A jump (> 1.5 s beyond a normal tick) means you seeked → snap the video.
+    if (!showing) { lastPos = pos; return }
+    if (lastPos >= 0 && Math.abs(pos - lastPos) > 1500) post('seekTo', [pos / 1000, true])
+    lastPos = pos
+  })
 }
 
 async function toggle(np: NowPlaying | null): Promise<void> {
@@ -56,7 +66,13 @@ async function toggleFullscreen(el: HTMLElement): Promise<void> {
 
 function teardown(): void {
   showing = false
+  lastPos = -1
   if (document.fullscreenElement) void document.exitFullscreen().catch(() => {})
   const wrap = document.getElementById('clip-wrap')
   if (wrap) { wrap.classList.remove('visible'); setTimeout(() => wrap.remove(), 350) }
+}
+
+function post(func: string, args: unknown[]): void {
+  const frame = document.getElementById('clip-frame') as HTMLIFrameElement | null
+  frame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*')
 }
