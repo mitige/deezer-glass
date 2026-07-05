@@ -32,7 +32,6 @@ function setupSyncControls(): void {
   }
   document.getElementById('sync-minus')?.addEventListener('click', () => adjust(-250))
   document.getElementById('sync-plus')?.addEventListener('click', () => adjust(250))
-  window.addEventListener('keydown', (e) => { if (e.key === '[') adjust(-250); else if (e.key === ']') adjust(250) })
   paint()
 }
 

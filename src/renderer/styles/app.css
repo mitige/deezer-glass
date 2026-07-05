@@ -85,15 +85,6 @@ body { height: 100vh; overflow: hidden; background: #0b0f17; color: #fff; font-f
 .lyric.active { color: #fff; font-size: 20px; font-weight: 600; text-shadow: 0 2px 16px rgba(0,0,0,.4); }
 
 #controls { position: fixed; bottom: 22px; right: 26px; z-index: 6; display: flex; gap: 8px; align-items: center; }
-#sync { display: flex; align-items: center; gap: 3px; -webkit-app-region: no-drag;
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 20px;
-  padding: 3px; opacity: .5; transition: opacity .2s ease; backdrop-filter: blur(12px); }
-#sync:hover { opacity: 1; }
-#sync button { width: 22px; height: 22px; border-radius: 50%; border: none; cursor: pointer; padding: 0;
-  background: rgba(255,255,255,.12); color: #fff; font-size: 14px; line-height: 1; }
-#sync button:hover { background: rgba(255,255,255,.26); }
-#sync-val { font-size: 11px; color: rgba(255,255,255,.82); min-width: 46px; text-align: center;
-  font-variant-numeric: tabular-nums; letter-spacing: .2px; }
 #art::before { content: ''; position: absolute; inset: 0; border-radius: 16px;
   background: rgba(0,0,0,.28); opacity: 0; transition: opacity .25s ease; }
 #art::after { content: ''; position: absolute; top: 50%; left: 50%;
