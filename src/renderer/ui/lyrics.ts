@@ -7,6 +7,8 @@ let durationMs = 0
 let live = false
 let activeIdx = -1
 let currentTrack = ''
+let weightStarts: number[] = []
+let weightTotal = 1
 
 export function initLyrics(): void {
   onTick((pos) => {
@@ -16,11 +18,16 @@ export function initLyrics(): void {
       // exact: last line whose timestamp has passed
       for (let i = 0; i < synced.length; i++) { const ln = synced[i]; if (ln && ln.timeMs <= pos) idx = i; else break }
     } else if (durationMs > 0) {
-      // approximate: map progress to a line, allowing for a typical intro/outro (no timestamps exist)
-      const INTRO = 8000, OUTRO = 8000
+      // approximate (no timestamps): distribute the song's singing time across the lyrics by TEXT
+      // WEIGHT — long lines dwell longer, section markers / blank lines pass instantly — so the
+      // scroll tracks the Deezer duration far more naturally than a uniform per-line mapping.
+      const INTRO = 5000, OUTRO = 5000
       const span = Math.max(1, durationMs - INTRO - OUTRO)
-      const frac = Math.max(0, Math.min(0.999, (pos - INTRO) / span))
-      idx = Math.floor(frac * lineCount)
+      const frac = Math.max(0, Math.min(1, (pos - INTRO) / span))
+      const target = frac * weightTotal
+      let i = 0
+      while (i + 1 < lineCount && (weightStarts[i + 1] ?? Infinity) <= target) i++
+      idx = i
     }
     if (idx !== activeIdx) { activeIdx = idx; paintActive() }
   })
@@ -46,10 +53,21 @@ export async function loadLyricsFor(np: NowPlaying): Promise<void> {
   }
 }
 
+function lineWeight(text: string): number {
+  const t = text.trim()
+  if (!t) return 0                                // blank / instrumental gap — no dwell
+  if (/^[\[(][^\])]*[\])]$/.test(t)) return 8     // [Refrain], [Intro], (chorus)… — brief
+  return Math.max(12, t.length)                   // dwell ~ proportional to line length
+}
+
 function render(texts: string[]): void {
   const box = document.getElementById('lyrics')!
   activeIdx = -1
   lineCount = texts.length
+  weightStarts = []
+  let acc = 0
+  for (const t of texts) { weightStarts.push(acc); acc += lineWeight(t) }
+  weightTotal = Math.max(1, acc)
   box.innerHTML = ''
   for (const t of texts) {
     const div = document.createElement('div'); div.className = 'lyric'; div.textContent = t
