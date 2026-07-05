@@ -18,7 +18,7 @@ async function getToken(): Promise<string | null> {
   return null
 }
 
-export async function getMusixmatch(track: { artist: string; title: string }): Promise<Lyrics | null> {
+export async function getMusixmatch(track: { artist: string; title: string; durationMs?: number }): Promise<Lyrics | null> {
   let token = await getToken()
   if (!token) return null
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -34,7 +34,14 @@ export async function getMusixmatch(track: { artist: string; title: string }): P
       const titleOk = bidir(normalizeLoose(parsed.matchedTitle ?? ''), normalizeLoose(track.title))
       const artistOk = bidir(normalizeLoose(parsed.matchedArtist ?? ''), normalizeLoose(track.artist))
       if (!titleOk || !artistOk) return null
-      return { synced: parsed.synced, plain: parsed.plain, source: 'musixmatch' }
+      // Duration alignment: a synced version whose length differs from Deezer's is a different
+      // master (mistimed) — drop the synced so we never show offset karaoke; keep any plain text.
+      let synced = parsed.synced
+      if (synced && parsed.matchedLength && track.durationMs) {
+        if (Math.abs(parsed.matchedLength - Math.round(track.durationMs / 1000)) > 4) synced = null
+      }
+      if (!synced && !parsed.plain) return null
+      return { synced, plain: parsed.plain, source: 'musixmatch' }
     } catch { return null }
   }
   return null

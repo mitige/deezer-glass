@@ -39,6 +39,12 @@ describe('pickLrclibResult', () => {
     expect(r.synced).toBeNull()
     expect(r.plain).toBeNull()
   })
+  it('does not sync against a moderately-off duration (mistimed master) — falls back to plain', () => {
+    const hits = [{ trackName: 'Song', artistName: 'A', duration: 210, syncedLyrics: '[00:01.00]x', plainLyrics: 'x' }]
+    const r = pickLrclibResult(hits, { title: 'Song', artist: 'A', durationMs: 200_000 })
+    expect(r.synced).toBeNull()
+    expect(r.plain).toBe('x')
+  })
   it('returns empty when nothing has lyrics', () => {
     expect(pickLrclibResult([], { title: 'x', artist: 'y', durationMs: 1000 })).toEqual({ synced: null, plain: null, source: 'lrclib' })
   })

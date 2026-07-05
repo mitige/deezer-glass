@@ -18,11 +18,11 @@ describe('musixmatch urls', () => {
 })
 
 describe('parseMusixmatchMacro', () => {
-  const macro = (subtitle: string | null, lyrics: string | null, track?: { name: string; artist: string }) => ({
+  const macro = (subtitle: string | null, lyrics: string | null, track?: { name: string; artist: string; length?: number }) => ({
     message: { body: { macro_calls: {
       'track.subtitles.get': { message: { body: { subtitle_list: subtitle ? [{ subtitle: { subtitle_body: subtitle } }] : [] } } },
       'track.lyrics.get': { message: { body: { lyrics: lyrics ? { lyrics_body: lyrics } : {} } } },
-      'matcher.track.get': { message: { body: { track: track ? { track_name: track.name, artist_name: track.artist } : {} } } },
+      'matcher.track.get': { message: { body: { track: track ? { track_name: track.name, artist_name: track.artist, track_length: track.length } : {} } } },
     } } },
   })
   it('parses a synced LRC subtitle', () => {
@@ -34,12 +34,13 @@ describe('parseMusixmatchMacro', () => {
     expect(r.synced).toBeNull()
     expect(r.plain).toBe('plain words')
   })
-  it('exposes the matched track name and artist (for collision checks)', () => {
-    const r = parseMusixmatchMacro(macro('[00:01.00]x', null, { name: 'Au DD', artist: 'PNL' }))
+  it('exposes the matched track name, artist and length (for collision + duration checks)', () => {
+    const r = parseMusixmatchMacro(macro('[00:01.00]x', null, { name: 'Au DD', artist: 'PNL', length: 247 }))
     expect(r.matchedTitle).toBe('Au DD')
     expect(r.matchedArtist).toBe('PNL')
+    expect(r.matchedLength).toBe(247)
   })
   it('returns nulls on empty', () => {
-    expect(parseMusixmatchMacro({})).toEqual({ synced: null, plain: null, matchedTitle: null, matchedArtist: null })
+    expect(parseMusixmatchMacro({})).toEqual({ synced: null, plain: null, matchedTitle: null, matchedArtist: null, matchedLength: null })
   })
 })
