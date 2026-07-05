@@ -1,6 +1,7 @@
 import { buildLrclibGetUrl, buildLrclibSearchUrl, mapLrclibResponse, pickLrclibResult } from '../shared/lrclib'
 import { buildGeniusSearchUrl, pickGeniusUrl, extractGeniusLyrics } from '../shared/genius'
 import { getMusixmatch } from './musixmatch'
+import { getDeezerLyrics } from './deezer'
 import type { Lyrics } from '../shared/types'
 import { loadLyricsCache, saveLyricsCache } from './store'
 
@@ -54,21 +55,23 @@ export async function getLyrics(track: Track): Promise<Lyrics> {
   const cached = cache[track.trackId]
   if (cached) { mem.set(track.trackId, cached); return cached }
 
-  // synced tier — first source with timestamps wins
-  const lrc = await fromLrclib(track)
-  let result: Lyrics | null = null
-  if (lrc?.synced?.length) result = lrc
+  const dz = await getDeezerLyrics(track) // Deezer's own = exact master, top priority
+  let result: Lyrics | null = dz?.synced?.length ? dz : null
+
   if (!result) {
-    const mxm = await getMusixmatch(track)
-    if (mxm?.synced?.length) result = mxm
-    // plain tier — first non-empty
+    const lrc = await fromLrclib(track)
+    if (lrc?.synced?.length) result = lrc
     if (!result) {
-      let plain: string | null = lrc?.plain ?? null
-      let source: Lyrics['source'] = plain ? 'lrclib' : 'none'
-      if (!plain && mxm?.plain) { plain = mxm.plain; source = 'musixmatch' }
-      if (!plain) { const g = await geniusPlain(track); if (g) { plain = g; source = 'genius' } }
-      if (!plain) { const o = await lyricsOvhPlain(track); if (o) { plain = o; source = 'lyricsovh' } }
-      result = { synced: null, plain, source }
+      const mxm = await getMusixmatch(track)
+      if (mxm?.synced?.length) result = mxm
+      if (!result) {
+        let plain: string | null = dz?.plain ?? lrc?.plain ?? null
+        let source: Lyrics['source'] = dz?.plain ? 'deezer' : lrc?.plain ? 'lrclib' : 'none'
+        if (!plain && mxm?.plain) { plain = mxm.plain; source = 'musixmatch' }
+        if (!plain) { const g = await geniusPlain(track); if (g) { plain = g; source = 'genius' } }
+        if (!plain) { const o = await lyricsOvhPlain(track); if (o) { plain = o; source = 'lyricsovh' } }
+        result = { synced: null, plain, source }
+      }
     }
   }
 

@@ -2,7 +2,7 @@ import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { attachSmtc } from './smtc'
 import { registerIpc } from './ipc'
-import { loadBounds, saveBounds } from './store'
+import { loadBounds, saveBounds, ensureConfig } from './store'
 
 function createWindow(): void {
   const b = loadBounds()
@@ -32,6 +32,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  ensureConfig()
   registerIpc()
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })

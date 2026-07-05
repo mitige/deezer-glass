@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 const dir = () => app.getPath('userData')
@@ -19,3 +19,9 @@ export const saveBounds = (b: Bounds) => writeJson('bounds.json', b)
 type LyricsCache = Record<string, unknown>
 export const loadLyricsCache = (): LyricsCache => readJson('lyrics-cache.json', {})
 export const saveLyricsCache = (c: LyricsCache) => writeJson('lyrics-cache.json', c)
+
+export interface AppConfig { deezerArl?: string }
+export const loadConfig = (): AppConfig => readJson('config.json', {})
+export function ensureConfig(): void {
+  try { if (!existsSync(file('config.json'))) writeJson('config.json', { deezerArl: '' }) } catch { /* ignore */ }
+}
