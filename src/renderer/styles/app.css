@@ -69,8 +69,8 @@ body { height: 100vh; overflow: hidden; background: #0b0f17; color: #fff; font-f
   color: rgba(255,255,255,.66); text-shadow: 0 1px 10px rgba(0,0,0,.4); }
 #progress { height: 3px; border-radius: 3px; background: rgba(255,255,255,.18); margin-top: 20px; width: 100%; }
 #bar { height: 100%; border-radius: 3px; width: 0;
-  background: var(--art-accent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--art-accent) 75%, transparent); }
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255,255,255,0.5); }
 #times { display: flex; justify-content: space-between; font-size: 11.5px; margin-top: 8px;
   color: rgba(255,255,255,.5); }
 
