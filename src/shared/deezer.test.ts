@@ -1,4 +1,4 @@
-import { buildDeezerUserDataUrl, buildDeezerLyricsUrl, buildDeezerSearchUrl, pickDeezerTrackId, parseDeezerSync } from './deezer'
+import { buildDeezerUserDataUrl, buildDeezerLyricsUrl, buildDeezerSearchUrl, rankDeezerTrackIds, parseDeezerSync } from './deezer'
 
 describe('deezer urls', () => {
   it('user-data + lyrics + search endpoints', () => {
@@ -11,18 +11,22 @@ describe('deezer urls', () => {
   })
 })
 
-describe('pickDeezerTrackId', () => {
+describe('rankDeezerTrackIds', () => {
   const json = { data: [
-    { id: 111, title: 'Au DD (edit)', artist: { name: 'PNL' }, duration: 200 },
-    { id: 222, title: 'Au DD', artist: { name: 'PNL' }, duration: 247 },
+    { id: 111, title: 'Au DD (edit)', artist: { name: 'PNL' }, album: { title: 'Single' }, duration: 200 },
+    { id: 222, title: 'Au DD', artist: { name: 'PNL' }, album: { title: 'Deux frères' }, duration: 247 },
     { id: 333, title: 'Other', artist: { name: 'X' }, duration: 247 },
+    { id: 444, title: 'Au DD', artist: { name: 'PNL' }, album: { title: 'Deux frères' }, duration: 300 },
   ] }
-  it('picks the title/artist match closest in duration', () => {
-    expect(pickDeezerTrackId(json, { title: 'Au DD', artist: 'PNL', durationMs: 247000 })).toBe('222')
+  it('prefers the same album, then closest duration', () => {
+    expect(rankDeezerTrackIds(json, { title: 'Au DD', artist: 'PNL', album: 'Deux Frères', durationMs: 247000 })).toEqual(['222', '444', '111'])
   })
-  it('returns null when nothing matches', () => {
-    expect(pickDeezerTrackId(json, { title: 'Nope', artist: 'Nobody', durationMs: 1000 })).toBeNull()
-    expect(pickDeezerTrackId(null, { title: 'a', artist: 'b', durationMs: 1 })).toBeNull()
+  it('falls back to duration when no album is given', () => {
+    expect(rankDeezerTrackIds(json, { title: 'Au DD', artist: 'PNL', durationMs: 247000 })[0]).toBe('222')
+  })
+  it('returns [] when nothing matches', () => {
+    expect(rankDeezerTrackIds(json, { title: 'Nope', artist: 'Nobody', durationMs: 1000 })).toEqual([])
+    expect(rankDeezerTrackIds(null, { title: 'a', artist: 'b', durationMs: 1 })).toEqual([])
   })
 })
 
